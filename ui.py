@@ -67,6 +67,8 @@ class Ui_Form(object):
         self.horizontalLayout.addWidget(self.updateButtonWidget)
         self.gridLayout.addLayout(self.horizontalLayout, 2, 0, 1, 1)
 
+        self.updateButtonWidget.setEnabled(False)
+
         self.retranslateUi(Form)
         QtCore.QMetaObject.connectSlotsByName(Form)
 
