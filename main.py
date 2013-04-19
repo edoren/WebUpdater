@@ -4,6 +4,7 @@
 # Python native libraries
 import sys
 import os
+import configparser
 import threading
 import hashlib
 import pickle
@@ -28,11 +29,11 @@ def checkHash():
 	hashDict = {}
 
 	if os.name == 'posix':
-		modsPath = os.getenv("HOME")+"/.minecraft/mods"
-		binPath = os.getenv("HOME")+"/.minecraft/bin"
+		modsPath = os.path.join(os.getenv("HOME"), ".minecraft", "mods")
+		binPath = os.path.join(os.getenv("HOME"), ".minecraft" , "bin")
 	elif os.name == 'windows':
-		modsPath = os.getenv("APPDATA")+"\.minecraft\mods"
-		binPath = os.getenv("APPDATA")+"\.minecraft\\bin"
+		modsPath = os.path.join(os.getenv("APPDATA"), ".minecraft", "mods")
+		binPath = os.path.join(os.getenv("APPDATA"), ".minecraft" , "bin")
 
 	# files = [f for f in os.listdir(modsPath) if os.path.isfile(os.path.join(modsPath,f))]
 	files = [ f for f in os.listdir(modsPath) if f.endswith(".jar") or f.endswith(".zip") ]
@@ -56,8 +57,6 @@ if __name__ == "__main__":
 	ui = Ui_Form()
 	ui.setupUi(Form)
 	Form.show()
-
-	# self.statusCount = 0
 
 	statusThread = threading.Thread( target=ui.windowStatus, args=( ) )
 	checkHashThread = threading.Thread( target=checkHash, args=( ) )
