@@ -48,12 +48,12 @@ class updater():
 			self.file_size_bytes = self.ftp.size(filename)
 			self.fhandle = open(filename, 'wb')
 			print('Getting ' + filename + ' Size: ' + self.__size(self.file_size_bytes))
-			self.ftp.retrbinary('RETR ' + filename, self._downloadBuffer)
+			self.ftp.retrbinary('RETR ' + filename, self.__downloadBuffer)
 			self.fhandle.close()
 
 		self.ui.stopPBar()
 
-	def _downloadBuffer(self, buffer):
+	def __downloadBuffer(self, buffer):
 		self.dl_file_size += len(buffer)
 		self.fhandle.write(buffer)
 		p = int(self.dl_file_size * 100 / self.file_size_bytes)
