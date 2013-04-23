@@ -1,54 +1,73 @@
 # -*- coding: utf-8 -*-
 
+import os
 import sys
 import time
-import urllib.request
+import ftplib
 
 from PyQt4 import QtCore, QtGui 
 
+class Reference():
+    def __init__(self, value):
+        self.value = value
+    def set(self, value):
+        self.value = value
+    def get(self):
+        return self.value
+
 class updater():
-	def __init__(self, arg):
+	def __init__(self, ui):
 		super(updater, self).__init__()
-		self.arg = arg
+		self.pBarValue = Reference(0)
+		self.ui = ui
 
-def download(url):
-	file_name = url.split('/')[-1]
+	def login(self, config):
+		server = config['FTP']['server']
+		username = config['FTP']['username']
+		password = config['FTP']['password']
 
-	while True:
-		try:
-			download = urllib.request.urlopen(url)
-		except:
-			print("Error trying to download the file, please check your network connection.")
-			print("Trying again in 5 seconds")
-			time.sleep(5)
-			continue
-		break
+		self.ftp = ftplib.FTP(server)
+		self.ftp.login(username, password)
 
-	file_save = open(file_name, 'wb')
+	def quit(self):
+		self.ftp.quit()
 
-	meta = download.info()
+	def close(self):
+		self.ftp.close()
 
-	file_size_bytes = int(meta['Content-Length'])
+	def downloadFolderFiles(self, directory):
+		self.ftp.cwd(directory)
 
-	if file_size_bytes < 1024:
-		print_file_size = str("{0:.2f}".format(file_size_bytes)) + "Bytes"
-	elif file_size_bytes/1024 < 1024:
-		print_file_size = str("{0:.2f}".format(file_size_bytes/1024)) + "KB"
-	else:
-		print_file_size = str("{0:.2f}".format(file_size_bytes/1024**2)) + "MB"
+		print(self.ftp.nlst('*.dll', '*.so'))
 
-	print("Downloading: {0} Size: {1}".format(file_name, print_file_size))
+		self.ui.startPBar(self.pBarValue)
 
-	dl_file_size = 0
-	block_sz = 8192
-	while True:
-	    buffer = download.read(block_sz)
-	    if not buffer:
-	        break
+		for filename in self.ftp.nlst('*.dll', '*.so'):
+			self.dl_file_size = 0
+			self.pBarValue.set(0)
+			self.file_size_bytes = self.ftp.size(filename)
+			self.fhandle = open(filename, 'wb')
+			print('Getting ' + filename + ' Size: ' + self.__size(self.file_size_bytes))
+			self.ftp.retrbinary('RETR ' + filename, self._downloadBuffer)
+			self.fhandle.close()
 
-	    dl_file_size += len(buffer)
-	    file_save.write(buffer)
-	    p = int(dl_file_size * 100 / file_size_bytes)
-	    print(p)
+		self.ui.stopPBar()
 
-	file_save.close()
+	def _downloadBuffer(self, buffer):
+		self.dl_file_size += len(buffer)
+		self.fhandle.write(buffer)
+		p = int(self.dl_file_size * 100 / self.file_size_bytes)
+		self.pBarValue.set(p)
+		print(p)
+
+	def __size(self, size):
+		if size < 1024:
+			file_size = str("{0:.2f}".format(size)) + " Bytes"
+		elif size/1024 < 1024:
+			file_size = str("{0:.2f}".format(size/1024)) + " KB"
+		else:
+			file_size = str("{0:.2f}".format(size/1024**2)) + " MB"
+
+		# print("File size: {0}".format(file_size))
+
+		return file_size
