@@ -28,10 +28,6 @@ class updater():
 
 		self.host = ftputil.FTPHost(server, username, password)
 
-	def quit(self):
-		pass
-		# self.ftp.quit()
-
 	def close(self):
 		self.host.close()
 
