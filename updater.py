@@ -16,48 +16,55 @@ class Reference():
         return self.value
 
 class updater():
-	def __init__(self, ui):
-		super(updater, self).__init__()
-		self.pBarValue = Reference(0)
-		self.ui = ui
+    def __init__(self, ui):
+        super(updater, self).__init__()
+        self.pBarValue = Reference(0)
+        self.ui = ui
 
-	def login(self, config):
-		server = config['FTP']['server']
-		username = config['FTP']['username']
-		password = config['FTP']['password']
+    def login(self, config):
+        server = config['FTP']['server']
+        username = config['FTP']['username']
+        password = config['FTP']['password']
 
-		self.host = ftputil.FTPHost(server, username, password)
+        self.host = ftputil.FTPHost(server, username, password)
 
-	def close(self):
-		self.host.close()
+    def close(self):
+        self.host.close()
 
-	def downloadFolderFiles(self, directory):
-		self.ui.startPBar(self.pBarValue)
+    def downloadFiles(self, path):
+        for (path, dirs, files) in self.host.walk(path):
+            print path
+            print dirs
+            print files
 
-		for filename in self.host.listdir(self.host.curdir):
-			if self.host.path.isfile(filename):
-				self.dl_file_size = 0
-				self.pBarValue.set(0)
-				self.file_size_bytes = self.host.path.getsize(filename)
-				print('Getting ' + filename + ' Size: ' + self.__size(self.file_size_bytes))
-				self.host.download(filename, filename, mode='b', callback=self.__downloadBuffer)
+    def downloadFolderFiles(self, directory):
+        self.ui.startPBar(self.pBarValue)
 
-		self.ui.stopPBar()
+        for filename in self.host.listdir(directory):
+            filepath = self.host.path.join(directory, filename)
+            if self.host.path.isfile(filepath):
+                self.dl_file_size = 0
+                self.pBarValue.set(0)
+                self.file_size_bytes = self.host.path.getsize(filepath)
+                print('Getting ' + filename + ' Size: ' + self.__size(self.file_size_bytes))
+                self.host.download(filename, filename, mode='b', callback=self.__downloadBuffer)
 
-	def __downloadBuffer(self, buffer):
-		self.dl_file_size += len(buffer)
-		p = int(self.dl_file_size * 100 / self.file_size_bytes)
-		self.pBarValue.set(p)
-		print(p)
+        self.ui.stopPBar()
 
-	def __size(self, size):
-		if size < 1024:
-			file_size = str("{0:.2f}".format(size)) + " Bytes"
-		elif size/1024 < 1024:
-			file_size = str("{0:.2f}".format(size/1024)) + " KB"
-		else:
-			file_size = str("{0:.2f}".format(size/1024**2)) + " MB"
+    def __downloadBuffer(self, buffer):
+        self.dl_file_size += len(buffer)
+        p = int(self.dl_file_size * 100 / self.file_size_bytes)
+        self.pBarValue.set(p)
+        print(p)
 
-		# print("File size: {0}".format(file_size))
+    def __size(self, size):
+        if size < 1024:
+            file_size = str("{0:.2f}".format(size)) + " Bytes"
+        elif size/1024 < 1024:
+            file_size = str("{0:.2f}".format(size/1024)) + " KB"
+        else:
+            file_size = str("{0:.2f}".format(size/1024**2)) + " MB"
 
-		return file_size
+        # print("File size: {0}".format(file_size))
+
+        return file_size
