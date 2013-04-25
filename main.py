@@ -22,7 +22,7 @@ def generateConfig():
 
     config['FTP_Server'] = {'Server': '',
                      'Username': '',
-                     'Password': ''
+                     'Password': '',
                      'ServerFolder': ''}
 
     config['DEFAULT'] = {'DownloadPath': ''}
