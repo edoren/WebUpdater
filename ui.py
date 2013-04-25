@@ -17,7 +17,7 @@ class downloadProgress(QtCore.QThread):
 
     def run(self):
         while not self.end:
-            time.sleep(0.15)
+            time.sleep(0.05)
             self.partDone.emit(self.b.get())
 
 class Ui_Form(object):

@@ -3,7 +3,7 @@
 import os
 import sys
 import time
-import ftplib
+import ftputil
 
 from PyQt4 import QtCore, QtGui 
 
@@ -26,36 +26,30 @@ class updater():
 		username = config['FTP']['username']
 		password = config['FTP']['password']
 
-		self.ftp = ftplib.FTP(server)
-		self.ftp.login(username, password)
+		self.host = ftputil.FTPHost(server, username, password)
 
 	def quit(self):
-		self.ftp.quit()
+		pass
+		# self.ftp.quit()
 
 	def close(self):
-		self.ftp.close()
+		self.host.close()
 
 	def downloadFolderFiles(self, directory):
-		self.ftp.cwd(directory)
-
-		print(self.ftp.nlst('*.dll', '*.so'))
-
 		self.ui.startPBar(self.pBarValue)
 
-		for filename in self.ftp.nlst('*.dll', '*.so'):
-			self.dl_file_size = 0
-			self.pBarValue.set(0)
-			self.file_size_bytes = self.ftp.size(filename)
-			self.fhandle = open(filename, 'wb')
-			print('Getting ' + filename + ' Size: ' + self.__size(self.file_size_bytes))
-			self.ftp.retrbinary('RETR ' + filename, self.__downloadBuffer)
-			self.fhandle.close()
+		for filename in self.host.listdir(self.host.curdir):
+			if self.host.path.isfile(filename):
+				self.dl_file_size = 0
+				self.pBarValue.set(0)
+				self.file_size_bytes = self.host.path.getsize(filename)
+				print('Getting ' + filename + ' Size: ' + self.__size(self.file_size_bytes))
+				self.host.download(filename, filename, mode='b', callback=self.__downloadBuffer)
 
 		self.ui.stopPBar()
 
 	def __downloadBuffer(self, buffer):
 		self.dl_file_size += len(buffer)
-		self.fhandle.write(buffer)
 		p = int(self.dl_file_size * 100 / self.file_size_bytes)
 		self.pBarValue.set(p)
 		print(p)
