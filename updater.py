@@ -5,8 +5,6 @@ import sys
 import time
 import ftputil
 
-from PyQt4 import QtCore, QtGui 
-
 class Reference():
     def __init__(self, value):
         self.value = value
@@ -22,32 +20,36 @@ class updater():
         self.ui = ui
 
     def login(self, config):
-        server = config['FTP']['server']
-        username = config['FTP']['username']
-        password = config['FTP']['password']
+        server = config['FTP_Server']['Server']
+        username = config['FTP_Server']['Username']
+        password = config['FTP_Server']['Password']
 
         self.host = ftputil.FTPHost(server, username, password)
 
     def close(self):
         self.host.close()
 
-    def downloadFiles(self, path):
+    def downloadFiles(self, path=''):
         for (path, dirs, files) in self.host.walk(path):
-            print path
-            print dirs
-            print files
+            print(path)
+            self.downloadFolderFiles(path)
 
-    def downloadFolderFiles(self, directory):
+    def downloadFolderFiles(self, path=''):
+        try:
+            os.mkdir(path)
+        except OSError:
+            print("The folder", path, "already exist.")
+
         self.ui.startPBar(self.pBarValue)
 
-        for filename in self.host.listdir(directory):
-            filepath = self.host.path.join(directory, filename)
+        for filename in self.host.listdir(path):
+            filepath = self.host.path.join(path, filename)
             if self.host.path.isfile(filepath):
                 self.dl_file_size = 0
                 self.pBarValue.set(0)
                 self.file_size_bytes = self.host.path.getsize(filepath)
                 print('Getting ' + filename + ' Size: ' + self.__size(self.file_size_bytes))
-                self.host.download(filename, filename, mode='b', callback=self.__downloadBuffer)
+                self.host.download(filepath, os.path.join(path, filename), mode='b', callback=self.__downloadBuffer)
 
         self.ui.stopPBar()
 
@@ -55,7 +57,6 @@ class updater():
         self.dl_file_size += len(buffer)
         p = int(self.dl_file_size * 100 / self.file_size_bytes)
         self.pBarValue.set(p)
-        print(p)
 
     def __size(self, size):
         if size < 1024:
