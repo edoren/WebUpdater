@@ -43,10 +43,9 @@ class updater():
         try:
             self.host.chdir(self.serverpath)
             for (ftp_curpath, ftp_dirs, ftp_files) in self.host.walk(self.host.curdir):
-                print(ftp_curpath)
                 self.downloadFolderFiles(ftp_curpath)
-        except:
-            pass
+        except Exception as exc:
+            raise(exc)
 
     def getFullSize():
         pass
@@ -61,14 +60,16 @@ class updater():
             print("The folder", path, "already exist.")
 
         self.ui.startPBar(self.pBarValue)
-
         for filename in self.host.listdir(path):
             filepath = self.host.path.join(path, filename)
+            self.ui.statusText("Downloading")
             if self.host.path.isfile(filepath):
                 self.dl_file_size = 0
                 self.pBarValue.set(0)
                 self.file_size_bytes = self.host.path.getsize(filepath)
-                print('Getting ' + filename + ' Size: ' + self.__size(self.file_size_bytes))
+                self.file_size = self.__size(self.file_size_bytes)                
+                print("Downloading " + filename + " Size: " + self.file_size)
+                self.ui.statusLabel2.setText(filename + " - Size:" + self.file_size)
                 try:
                     self.host.download(filepath, os.path.join(path, filename), mode='b', callback=self.__downloadBuffer)
                 except OSError as exc:
