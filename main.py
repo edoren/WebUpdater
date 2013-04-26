@@ -4,6 +4,7 @@
 # Python native libraries
 import os
 import sys
+import hashgen
 import configparser
 import threading
 
@@ -12,10 +13,15 @@ from updater import updater # import updater from updater.py
 from ui import Ui_Form # Call Ui_Form method from ui.py
 from PyQt4 import QtCore, QtGui 
 
-def checkHash():
-    updater.login(config)
-    updater.downloadFiles(config['FTP_Server']['ServerFolder'])
-    updater.close()
+def updateFiles():
+    try:
+        updater.login(config)
+        updater.downloadFiles(config['FTP_Server']['ServerFolder'])
+        updater.close()
+    except:
+        ui.updateStatus = False
+        print("Login authentication failed")
+        ui.statusLabel2.setText("Login authentication failed")
 
 def generateConfig():
     config = configparser.ConfigParser()
@@ -44,7 +50,7 @@ if __name__ == "__main__":
     os.chdir(config['DEFAULT']['DownloadPath'])
 
     statusThread = threading.Thread( target=ui.labelStatus, args=( ) )
-    checkHashThread = threading.Thread( target=checkHash, args=( ) )
+    checkHashThread = threading.Thread( target=updateFiles, args=( ) )
 
     try:
         statusThread.setDaemon(True)
