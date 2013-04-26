@@ -23,16 +23,36 @@ class updater():
         server = config['FTP_Server']['Server']
         username = config['FTP_Server']['Username']
         password = config['FTP_Server']['Password']
+        self.serverpath = config['FTP_Server']['ServerFolder']
 
-        self.host = ftputil.FTPHost(server, username, password)
+        try:
+            self.host = ftputil.FTPHost(server, username, password)
+        except ftputil.ftp_error.PermanentError:
+            self.ui.updateStatus = False
+            print("Login authentication failed")
+            self.ui.statusLabel2.setText("Login authentication failed")
 
     def close(self):
-        self.host.close()
+        try:
+            self.host.close()
+        except:
+            pass
 
-    def downloadFiles(self, path=''):
-        for (path, dirs, files) in self.host.walk(path):
-            print(path)
-            self.downloadFolderFiles(path)
+    def downloadEntirePath(self, download_path=''):
+        os.chdir(download_path)
+        try:
+            self.host.chdir(self.serverpath)
+            for (ftp_curpath, ftp_dirs, ftp_files) in self.host.walk(self.host.curdir):
+                print(ftp_curpath)
+                self.downloadFolderFiles(ftp_curpath)
+        except:
+            pass
+
+    def getFullSize():
+        pass
+
+    def downloadFile():
+        pass
 
     def downloadFolderFiles(self, path=''):
         try:
@@ -49,7 +69,10 @@ class updater():
                 self.pBarValue.set(0)
                 self.file_size_bytes = self.host.path.getsize(filepath)
                 print('Getting ' + filename + ' Size: ' + self.__size(self.file_size_bytes))
-                self.host.download(filepath, os.path.join(path, filename), mode='b', callback=self.__downloadBuffer)
+                try:
+                    self.host.download(filepath, os.path.join(path, filename), mode='b', callback=self.__downloadBuffer)
+                except OSError as exc:
+                    print(exc)
 
         self.ui.stopPBar()
 
@@ -65,7 +88,5 @@ class updater():
             file_size = str("{0:.2f}".format(size/1024)) + " KB"
         else:
             file_size = str("{0:.2f}".format(size/1024**2)) + " MB"
-
-        # print("File size: {0}".format(file_size))
 
         return file_size

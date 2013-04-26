@@ -13,15 +13,13 @@ from updater import updater # import updater from updater.py
 from ui import Ui_Form # Call Ui_Form method from ui.py
 from PyQt4 import QtCore, QtGui 
 
+def checkHash():
+    pass
+
 def updateFiles():
-    try:
         updater.login(config)
-        updater.downloadFiles(config['FTP_Server']['ServerFolder'])
+        updater.downloadEntirePath(config['FTP_Server']['DownloadPath'])
         updater.close()
-    except:
-        ui.updateStatus = False
-        print("Login authentication failed")
-        ui.statusLabel2.setText("Login authentication failed")
 
 def generateConfig():
     config = configparser.ConfigParser()
@@ -46,8 +44,6 @@ if __name__ == "__main__":
     ui.setupUi(Form)
     updater = updater(ui)
     Form.show()
-
-    os.chdir(config['DEFAULT']['DownloadPath'])
 
     statusThread = threading.Thread( target=ui.labelStatus, args=( ) )
     checkHashThread = threading.Thread( target=updateFiles, args=( ) )
