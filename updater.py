@@ -42,7 +42,7 @@ class updater():
             print("Login authentication failed")
             self.ui.statusLabel2.setText("Login authentication failed")
 
-        self.serverHashDict = hashgen.openHashDict(self.downloadFile(config['FTP_Server']['HashPath']))
+        self.serverHashDict = hashgen.openHashDict(self.downloadFile(config['FTP_Server']['HashPath'], self.updaterDir))
         self.host.chdir(self.serverpath)
         # print(self.serverHashDict)
 
@@ -65,7 +65,7 @@ class updater():
         fileDiffer = DictDiffer(self.serverHashDict, self.localHashDict)
         self.downloadDiffer(fileDiffer.added())
         self.downloadDiffer(fileDiffer.changed())
-        # self.removeDiffer(fileDiffer.removed())
+        self.removeDiffer(fileDiffer.removed())
 
         hashgen.saveHashDict(self.localHashDict, self.updaterDir)
 
@@ -75,22 +75,26 @@ class updater():
             self.localHashDict[files] = self.serverHashDict[files]
 
     def removeDiffer(self, differ_set):
-        pass
+        for files in differ_set:
+            file_path = os.path.join(self.download_path, files)
+            os.remove(file_path)
+            del self.localHashDict[files]
+            print("File", os.path.split(file_path)[1], "removed.")
 
     def getFullSize(self):
         pass
 
-    def downloadFile(self, ftp_filepath):
+    def downloadFile(self, ftp_filepath, download_path):
         self.ui.statusText("Downloading")
         self.dl_file_size = 0
         self.pBarValue.set(0)
         self.file_size_bytes = self.host.path.getsize(ftp_filepath)
         self.file_size = self.__size(self.file_size_bytes)
-        download_path, filename=self.host.path.split(ftp_filepath)
+        ftp_path, filename=self.host.path.split(ftp_filepath)
         print("Downloading " + filename + " - Size: " + self.file_size)
         self.ui.statusLabel2.setText(filename + " - Size:" + self.file_size)
         try:
-            self.host.download(ftp_filepath, os.path.join(self.download_path, ftp_filepath), mode='b', callback=self.__downloadBuffer)
+            self.host.download(ftp_filepath, os.path.join(download_path, ftp_filepath), mode='b', callback=self.__downloadBuffer)
         except OSError as exc:
             print(exc)
          
@@ -114,10 +118,10 @@ class updater():
                     localFileHash = hashgen.getFileHash(os.path.join(self.download_path, ftp_filepath))
                 except Exception as e:
                     localFileHash = None
-                    print("El archivo no existe.")
+                    print("The file doesn't exist.")
 
                 if self.serverHashDict[ftp_filepath] != localFileHash:
-                    self.downloadFile(ftp_filepath)
+                    self.downloadFile(ftp_filepath, self.download_path)
 
                 self.localHashDict[ftp_filepath] = self.serverHashDict[ftp_filepath]
                     
