@@ -67,7 +67,7 @@ def startUpdaterThread():
         ui.scanButton.setEnabled(True)
         print("Error: unable to start updater thread")
 
-def startScannThread():
+def startScanThread():
     ui.updateButton.setEnabled(False)
     ui.scanButton.setEnabled(False)
     try:
