@@ -3,6 +3,10 @@
 import os
 import sys
 import time
+
+import hashgen
+from dictdiffer import DictDiffer
+
 import ftputil
 
 class Reference():
@@ -18,6 +22,12 @@ class updater():
         super(updater, self).__init__()
         self.pBarValue = Reference(0)
         self.ui = ui
+        self.updaterDir = os.getcwd()
+        try:
+            self.localHashDict = hashgen.openHashDict(os.path.join(save_directory, 'updater.dat'))
+        except Exception as exc:
+            print(exc)
+            self.localHashDict = {}
 
     def login(self, config):
         server = config['FTP_Server']['Server']
@@ -31,6 +41,9 @@ class updater():
             self.ui.updateStatus = False
             print("Login authentication failed")
             self.ui.statusLabel2.setText("Login authentication failed")
+
+        self.serverHashDict = hashgen.openHashDict(self.downloadFile(config['FTP_Server']['HashPath']))
+        # print(self.serverHashDict)
 
     def close(self):
         try:
@@ -46,35 +59,72 @@ class updater():
                 self.downloadFolderFiles(ftp_curpath)
         except Exception as exc:
             raise(exc)
+        finally:
+            hashgen.saveHashDict(self.localHashDict, self.updaterDir)
+            print(os.getcwd())
+            self.ui.updateStatus = False
+            time.sleep(0.5)
+            print("Update Complete.")
+            self.ui.statusLabel.setText("Update Complete.")
+
+    def calculateDiffer(self):
+        fileDiffer = DictDiffer(self.serverHashDict, self.localHashDict)
+        # downloadDiffer(fileDiffer.added())
+        # downloadDiffer(fileDiffer.changed())
+
+
+    def downloadDiffer(self, differ_set):
+        # for files in fileDiffer.added():
+        #     print(files)
+        pass
+
+    def removeDiffer(self, differ_set):
+        pass
 
     def getFullSize():
         pass
 
-    def downloadFile():
-        pass
-
-    def downloadFolderFiles(self, path=''):
+    def downloadFile(self, ftp_filepath):
+        self.ui.statusText("Downloading")
+        self.dl_file_size = 0
+        self.pBarValue.set(0)
+        self.file_size_bytes = self.host.path.getsize(ftp_filepath)
+        self.file_size = self.__size(self.file_size_bytes)
+        download_path, filename=self.host.path.split(ftp_filepath)
+        print("Downloading " + filename + " - Size: " + self.file_size)
+        self.ui.statusLabel2.setText(filename + " - Size:" + self.file_size)
         try:
-            os.mkdir(path)
+            self.host.download(ftp_filepath, os.path.join(download_path, filename), mode='b', callback=self.__downloadBuffer)
+        except OSError as exc:
+            print(exc)
+         
+        return os.path.join(download_path, filename)
+
+    def downloadFolderFiles(self, ftp_path=''):
+        try:
+            os.mkdir(ftp_path)
+            print(ftp_path)
         except OSError:
-            print("The folder", path, "already exist.")
+            print("The folder", ftp_path, "already exist.")
 
         self.ui.startPBar(self.pBarValue)
-        for filename in self.host.listdir(path):
-            filepath = self.host.path.join(path, filename)
-            self.ui.statusText("Downloading")
-            if self.host.path.isfile(filepath):
-                self.dl_file_size = 0
-                self.pBarValue.set(0)
-                self.file_size_bytes = self.host.path.getsize(filepath)
-                self.file_size = self.__size(self.file_size_bytes)                
-                print("Downloading " + filename + " Size: " + self.file_size)
-                self.ui.statusLabel2.setText(filename + " - Size:" + self.file_size)
-                try:
-                    self.host.download(filepath, os.path.join(path, filename), mode='b', callback=self.__downloadBuffer)
-                except OSError as exc:
-                    print(exc)
 
+        for filename in self.host.listdir(ftp_path):
+            ftp_filepath = self.host.path.join(ftp_path, filename)
+            print(ftp_filepath)
+
+            if self.host.path.isfile(ftp_filepath):
+                try:
+                    localFileHash = hashgen.getFileHash(ftp_filepath)
+                except Exception as e:
+                    localFileHash = None
+                    print("El archivo no existe.")
+
+                if self.serverHashDict[ftp_filepath] != localFileHash:
+                    self.downloadFile(ftp_filepath)
+
+                self.localHashDict[ftp_filepath] = self.serverHashDict[ftp_filepath]
+                    
         self.ui.stopPBar()
 
     def __downloadBuffer(self, buffer):

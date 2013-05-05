@@ -4,7 +4,6 @@
 # Python native libraries
 import os
 import sys
-import hashgen
 import configparser
 import threading
 
@@ -13,12 +12,15 @@ from updater import updater # import updater from updater.py
 from ui import Ui_Form # Call Ui_Form method from ui.py
 from PyQt4 import QtCore, QtGui 
 
-def checkHash():
-    pass
-
 def updateFiles():
+    try:
         updater.login(config)
-        updater.downloadEntirePath(config['FTP_Server']['DownloadPath'])
+        updater.downloadEntirePath(config['DEFAULT']['DownloadPath'])
+        updater.calculateDiffer()
+    except Exception as exc:
+        raise(exc)
+    finally:
+        print("Conection Closed")
         updater.close()
 
 def generateConfig():
@@ -27,7 +29,8 @@ def generateConfig():
     config['FTP_Server'] = {'Server': '',
                      'Username': '',
                      'Password': '',
-                     'ServerFolder': ''}
+                     'ServerFolder': '',
+                     'HashPath': ''}
 
     config['DEFAULT'] = {'DownloadPath': ''}
 
