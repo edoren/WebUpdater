@@ -25,7 +25,7 @@ class updater():
         try:
             self.localHashDict = hashgen.openHashDict(os.path.join(self.updaterDir, 'updater.dat'))
         except IOError as exc:
-            print(exc)
+            # print(exc)
             self.localHashDict = {}
 
     def login(self, config):
@@ -52,29 +52,39 @@ class updater():
         except:
             pass
 
+    def checkDownloadPath(self, download_path):
+        if not os.path.exists(download_path):
+            try:
+                os.makedirs(download_path)
+            except Exception as exc:
+                print(exc)
+
     def downloadEntirePath(self):
         try:
             for (ftp_curpath, ftp_dirs, ftp_files) in self.host.walk(self.host.curdir):
                 self.downloadFolderFiles(ftp_curpath)
+            hashgen.saveHashDict(self.localHashDict, self.updaterDir)
         except Exception as exc:
             raise(exc)
-        finally:
-            hashgen.saveHashDict(self.localHashDict, self.updaterDir)
 
     def calculateDiffer(self):
         fileDiffer = DictDiffer(self.serverHashDict, self.localHashDict)
-        if os.path.exists(os.path.join(self.updaterDir, 'updater.dat')):
+        if os.path.exists(os.path.join(self.updaterDir, 'updater.dat')) and os.path.exists(self.download_path):
             self.downloadDiffer(fileDiffer.added())
             self.downloadDiffer(fileDiffer.changed())
             self.removeDiffer(fileDiffer.removed())
+            hashgen.saveHashDict(self.localHashDict, self.updaterDir)
         else:
             try:
+                try:
+                    os.remove(os.path.join(self.updaterDir, 'updater.dat'))
+                except:
+                    pass
                 self.downloadEntirePath()
             except Exception as exc:
-                print(exc)
+                raise(exc)
                 os.remove(os.path.join(self.updaterDir, 'updater.dat'))
 
-        hashgen.saveHashDict(self.localHashDict, self.updaterDir)
 
     def downloadDiffer(self, differ_set):
         for files in differ_set:
@@ -101,20 +111,15 @@ class updater():
         print("Downloading " + filename + " - Size: " + self.file_size)
         self.ui.statusLabel2.setText(filename + " - Size:" + self.file_size)
         try:
+            self.checkDownloadPath(os.path.join(download_path, ftp_path))
             self.host.download(ftp_filepath, os.path.join(download_path, ftp_filepath), mode='b', callback=self.__downloadBuffer)
+            print(end="\n")
         except OSError as exc:
-            print(exc)
+            raise(exc)
          
         return os.path.join(download_path, filename)
 
     def downloadFolderFiles(self, ftp_path=''):
-        try:
-            os.mkdir(os.path.join(self.download_path, ftp_path))
-            print(os.path.join(self.download_path, ftp_path))
-        except OSError:
-            # print("The folder", ftp_path, "already exist.")
-            pass
-
         self.ui.startPBar(self.pBarValue)
 
         for filename in self.host.listdir(ftp_path):
@@ -129,7 +134,6 @@ class updater():
                     localFileHash = hashgen.getFileHash(os.path.join(self.download_path, ftp_filepath))
                 except Exception as exc:
                     localFileHash = None
-                    print("The file doesn't exist.")
 
                 if self.serverHashDict[ftp_filepath] != localFileHash:
                     self.downloadFile(ftp_filepath, self.download_path)
@@ -141,6 +145,7 @@ class updater():
     def __downloadBuffer(self, buffer):
         self.dl_file_size += len(buffer)
         p = int(self.dl_file_size * 100 / self.file_size_bytes)
+        print("Status: ", p, "%", end="\r")
         self.pBarValue.set(p)
 
     def __size(self, size):

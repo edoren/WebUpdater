@@ -88,16 +88,16 @@ class Ui_Form(object):
         self.buttonsLayout.setObjectName(_fromUtf8("buttonsLayout"))
 
         self.updateButton = QtGui.QPushButton(Form)
-        self.updateButton.setEnabled(False)
+        # self.updateButton.setEnabled(False)
         self.updateButton.setInputMethodHints(QtCore.Qt.ImhNone)
         self.updateButton.setObjectName(_fromUtf8("updateButton"))
 
         self.buttonsLayout.addWidget(self.updateButton)
 
-        self.pushButton = QtGui.QPushButton(Form)
-        self.pushButton.setObjectName(_fromUtf8("pushButton"))
+        self.scanButton = QtGui.QPushButton(Form)
+        self.scanButton.setObjectName(_fromUtf8("scanButton"))
 
-        self.buttonsLayout.addWidget(self.pushButton)
+        self.buttonsLayout.addWidget(self.scanButton)
 
         self.horizontalLayout.addLayout(self.buttonsLayout)
 
@@ -122,7 +122,7 @@ class Ui_Form(object):
         Form.setWindowTitle(QtGui.QApplication.translate("Form", "Updater", None, QtGui.QApplication.UnicodeUTF8))
         self.statusLabel.setText(QtGui.QApplication.translate("Form", "Checking for updates", None, QtGui.QApplication.UnicodeUTF8))
         self.updateButton.setText(QtGui.QApplication.translate("Form", "Update", None, QtGui.QApplication.UnicodeUTF8))
-        self.pushButton.setText(QtGui.QApplication.translate("Form", "Configure", None, QtGui.QApplication.UnicodeUTF8))
+        self.scanButton.setText(QtGui.QApplication.translate("Form", "Scan", None, QtGui.QApplication.UnicodeUTF8))
 
     def labelStatus(self):
         while self.updateStatus == True:

@@ -26,7 +26,22 @@ def updateFiles():
         ui.statusLabel.setText("Update Complete.")
 
         updater.close()
-        print("Conection Closed")
+        print("\nConection Closed")
+
+def scanFiles():
+    try:
+        updater.login(config)
+        updater.downloadEntirePath()
+    except Exception as exc:
+        raise(exc)
+    finally:
+        ui.updateStatus = False
+        time.sleep(0.5)
+        print("Update Complete.")
+        ui.statusLabel.setText("Update Complete.")
+
+        updater.close()
+        print("\nConection Closed")
 
 def generateConfig():
     config = configparser.ConfigParser()
@@ -42,6 +57,26 @@ def generateConfig():
     with open('server-config.cfg', 'w') as configfile:
         config.write(configfile)
 
+def startUpdaterThread():
+    ui.updateButton.setEnabled(False)
+    ui.scanButton.setEnabled(False)
+    try:
+        checkUpdatesThread.start()
+    except:
+        ui.updateButton.setEnabled(True)
+        ui.scanButton.setEnabled(True)
+        print("Error: unable to start updater thread")
+
+def startScannThread():
+    ui.updateButton.setEnabled(False)
+    ui.scanButton.setEnabled(False)
+    try:
+        scanFilesThread.start()
+    except:
+        ui.updateButton.setEnabled(True)
+        ui.scanButton.setEnabled(True)
+        print("Error: unable to start scanner thread")
+
 if __name__ == "__main__":
     config = configparser.ConfigParser()
     config.read('server-config.cfg')
@@ -50,18 +85,21 @@ if __name__ == "__main__":
     Form = QtGui.QWidget()
     ui = Ui_Form()
     ui.setupUi(Form)
+    QtCore.QObject.connect(ui.updateButton, QtCore.SIGNAL("clicked()"), startUpdaterThread)
+    QtCore.QObject.connect(ui.scanButton, QtCore.SIGNAL("clicked()"), startScanThread)
     updater = updater(ui)
     Form.show()
 
     statusThread = threading.Thread( target=ui.labelStatus, args=( ) )
-    checkHashThread = threading.Thread( target=updateFiles, args=( ) )
+    checkUpdatesThread = threading.Thread( target=updateFiles, args=( ) )
+    scanFilesThread = threading.Thread( target=scanFiles , args=( ) )
+    statusThread.setDaemon(True)
+    checkUpdatesThread.setDaemon(True)
+    scanFilesThread.setDaemon(True)
 
     try:
-        statusThread.setDaemon(True)
-        checkHashThread.setDaemon(True)
         statusThread.start()
-        checkHashThread.start()
     except:
-        print("Error: unable to start thread")
+        print("Error: unable to start status thread")
 
     sys.exit(app.exec_())

@@ -18,9 +18,14 @@ def getFileHash(file_path):
     return __sha1_hash(file_path)
 
 def openHashDict(data_file):
-    pkl_file = open(data_file, 'rb')
-    hashdict = pickle.load(pkl_file)
-    pkl_file.close()
+    try:
+        pkl_file = open(data_file, 'rb')
+        hashdict = pickle.load(pkl_file)
+        pkl_file.close()
+    except EOFError as exc:
+        os.remove(data_file)
+        print("Corrupted file removed")
+        return {}
     return hashdict
 
 def saveHashDict(hash_dict, save_directory=''):
