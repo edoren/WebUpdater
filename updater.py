@@ -24,7 +24,7 @@ class updater():
         self.updaterDir = os.getcwd()
         try:
             self.localHashDict = hashgen.openHashDict(os.path.join(self.updaterDir, 'updater.dat'))
-        except Exception as exc:
+        except IOError as exc:
             print(exc)
             self.localHashDict = {}
 
@@ -63,15 +63,22 @@ class updater():
 
     def calculateDiffer(self):
         fileDiffer = DictDiffer(self.serverHashDict, self.localHashDict)
-        self.downloadDiffer(fileDiffer.added())
-        self.downloadDiffer(fileDiffer.changed())
-        self.removeDiffer(fileDiffer.removed())
+        if os.path.exists(os.path.join(self.updaterDir, 'updater.dat')):
+            self.downloadDiffer(fileDiffer.added())
+            self.downloadDiffer(fileDiffer.changed())
+            self.removeDiffer(fileDiffer.removed())
+        else:
+            try:
+                self.downloadEntirePath()
+            except Exception as exc:
+                print(exc)
+                os.remove(os.path.join(self.updaterDir, 'updater.dat'))
 
         hashgen.saveHashDict(self.localHashDict, self.updaterDir)
 
     def downloadDiffer(self, differ_set):
         for files in differ_set:
-            self.downloadFile(files)
+            self.downloadFile(files, self.download_path)
             self.localHashDict[files] = self.serverHashDict[files]
 
     def removeDiffer(self, differ_set):
@@ -85,7 +92,7 @@ class updater():
         pass
 
     def downloadFile(self, ftp_filepath, download_path):
-        self.ui.statusText("Downloading")
+        self.ui.statusText = "Downloading"
         self.dl_file_size = 0
         self.pBarValue.set(0)
         self.file_size_bytes = self.host.path.getsize(ftp_filepath)
@@ -105,18 +112,22 @@ class updater():
             os.mkdir(os.path.join(self.download_path, ftp_path))
             print(os.path.join(self.download_path, ftp_path))
         except OSError:
-            print("The folder", ftp_path, "already exist.")
+            # print("The folder", ftp_path, "already exist.")
+            pass
 
         self.ui.startPBar(self.pBarValue)
 
         for filename in self.host.listdir(ftp_path):
             ftp_filepath = self.host.path.join(ftp_path, filename)
-            print(ftp_filepath)
+            # print(ftp_filepath)
 
             if self.host.path.isfile(ftp_filepath):
+                self.ui.statusText = "Checking files"
+                self.ui.statusLabel2.setText("Checking " + filename)
+                print("Checking", filename)
                 try:
                     localFileHash = hashgen.getFileHash(os.path.join(self.download_path, ftp_filepath))
-                except Exception as e:
+                except Exception as exc:
                     localFileHash = None
                     print("The file doesn't exist.")
 

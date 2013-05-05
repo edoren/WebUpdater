@@ -10,20 +10,20 @@ except AttributeError:
 
 class downloadProgress(QtCore.QThread):
     partDone = QtCore.pyqtSignal(int)
-    def Start(self, b):
+    def Start(self, actualstatus):
         self.end = False
-        self.b = b
+        self.actualstatus = actualstatus
         self.start()
 
     def run(self):
         while not self.end:
             time.sleep(0.05)
-            self.partDone.emit(self.b.get())
+            self.partDone.emit(self.actualstatus.get())
 
 class Ui_Form(object):
     def __init__(self):
         super(Ui_Form, self).__init__()
-        self.statText = "Checking for updates"
+        self.statusText = "Checking for updates"
         self.statusCount = 0
         self.updateStatus = True
 
@@ -109,10 +109,6 @@ class Ui_Form(object):
         self.retranslateUi(Form)
         QtCore.QMetaObject.connectSlotsByName(Form)
 
-    def statusText(self, text):
-        self.statText = text
-        self.statusCount = 0
-
     def startPBar(self, pBarVar):
         self.pBarThread.Start(pBarVar)
 
@@ -133,8 +129,6 @@ class Ui_Form(object):
             time.sleep(0.5)
             if self.statusCount < 3:
                 self.statusCount += 1
-                self.statText += "."
             else:
-                self.statText = self.statText[:-self.statusCount]
                 self.statusCount = 0
-            self.statusLabel.setText(self.statText)
+            self.statusLabel.setText(self.statusText + "."*self.statusCount)
