@@ -4,6 +4,7 @@
 # Python native libraries
 import os
 import sys
+import time
 import configparser
 import threading
 
@@ -15,13 +16,17 @@ from PyQt4 import QtCore, QtGui
 def updateFiles():
     try:
         updater.login(config)
-        updater.downloadEntirePath(config['DEFAULT']['DownloadPath'])
         updater.calculateDiffer()
     except Exception as exc:
         raise(exc)
     finally:
-        print("Conection Closed")
+        ui.updateStatus = False
+        time.sleep(0.5)
+        print("Update Complete.")
+        ui.statusLabel.setText("Update Complete.")
+
         updater.close()
+        print("Conection Closed")
 
 def generateConfig():
     config = configparser.ConfigParser()

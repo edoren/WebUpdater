@@ -2,7 +2,6 @@
 
 import os
 import sys
-import time
 
 import hashgen
 from dictdiffer import DictDiffer
@@ -24,7 +23,7 @@ class updater():
         self.ui = ui
         self.updaterDir = os.getcwd()
         try:
-            self.localHashDict = hashgen.openHashDict(os.path.join(save_directory, 'updater.dat'))
+            self.localHashDict = hashgen.openHashDict(os.path.join(self.updaterDir, 'updater.dat'))
         except Exception as exc:
             print(exc)
             self.localHashDict = {}
@@ -34,6 +33,7 @@ class updater():
         username = config['FTP_Server']['Username']
         password = config['FTP_Server']['Password']
         self.serverpath = config['FTP_Server']['ServerFolder']
+        self.download_path = config['DEFAULT']['DownloadPath']
 
         try:
             self.host = ftputil.FTPHost(server, username, password)
@@ -43,6 +43,7 @@ class updater():
             self.ui.statusLabel2.setText("Login authentication failed")
 
         self.serverHashDict = hashgen.openHashDict(self.downloadFile(config['FTP_Server']['HashPath']))
+        self.host.chdir(self.serverpath)
         # print(self.serverHashDict)
 
     def close(self):
@@ -51,37 +52,32 @@ class updater():
         except:
             pass
 
-    def downloadEntirePath(self, download_path=''):
-        os.chdir(download_path)
+    def downloadEntirePath(self):
         try:
-            self.host.chdir(self.serverpath)
             for (ftp_curpath, ftp_dirs, ftp_files) in self.host.walk(self.host.curdir):
                 self.downloadFolderFiles(ftp_curpath)
         except Exception as exc:
             raise(exc)
         finally:
             hashgen.saveHashDict(self.localHashDict, self.updaterDir)
-            print(os.getcwd())
-            self.ui.updateStatus = False
-            time.sleep(0.5)
-            print("Update Complete.")
-            self.ui.statusLabel.setText("Update Complete.")
 
     def calculateDiffer(self):
         fileDiffer = DictDiffer(self.serverHashDict, self.localHashDict)
-        # downloadDiffer(fileDiffer.added())
-        # downloadDiffer(fileDiffer.changed())
+        self.downloadDiffer(fileDiffer.added())
+        self.downloadDiffer(fileDiffer.changed())
+        # self.removeDiffer(fileDiffer.removed())
 
+        hashgen.saveHashDict(self.localHashDict, self.updaterDir)
 
     def downloadDiffer(self, differ_set):
-        # for files in fileDiffer.added():
-        #     print(files)
-        pass
+        for files in differ_set:
+            self.downloadFile(files)
+            self.localHashDict[files] = self.serverHashDict[files]
 
     def removeDiffer(self, differ_set):
         pass
 
-    def getFullSize():
+    def getFullSize(self):
         pass
 
     def downloadFile(self, ftp_filepath):
@@ -94,7 +90,7 @@ class updater():
         print("Downloading " + filename + " - Size: " + self.file_size)
         self.ui.statusLabel2.setText(filename + " - Size:" + self.file_size)
         try:
-            self.host.download(ftp_filepath, os.path.join(download_path, filename), mode='b', callback=self.__downloadBuffer)
+            self.host.download(ftp_filepath, os.path.join(self.download_path, ftp_filepath), mode='b', callback=self.__downloadBuffer)
         except OSError as exc:
             print(exc)
          
@@ -102,8 +98,8 @@ class updater():
 
     def downloadFolderFiles(self, ftp_path=''):
         try:
-            os.mkdir(ftp_path)
-            print(ftp_path)
+            os.mkdir(os.path.join(self.download_path, ftp_path))
+            print(os.path.join(self.download_path, ftp_path))
         except OSError:
             print("The folder", ftp_path, "already exist.")
 
@@ -115,7 +111,7 @@ class updater():
 
             if self.host.path.isfile(ftp_filepath):
                 try:
-                    localFileHash = hashgen.getFileHash(ftp_filepath)
+                    localFileHash = hashgen.getFileHash(os.path.join(self.download_path, ftp_filepath))
                 except Exception as e:
                     localFileHash = None
                     print("El archivo no existe.")
