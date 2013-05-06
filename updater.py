@@ -19,7 +19,9 @@ class Reference():
 class updater():
     def __init__(self, ui):
         super(updater, self).__init__()
-        self.pBarValue = Reference(0)
+        self.pBar1Value = Reference(0)
+        self.pBar2Value = Reference(0)
+        self.totalDownSize = 0
         self.ui = ui
         self.updaterDir = os.getcwd()
         try:
@@ -56,6 +58,9 @@ class updater():
             self.ui.statusLabel2.setText("No Internet connection.")
             return 0
 
+        self.pBar1Value.set(0)
+        self.pBar2Value.set(0)
+
     def close(self):
         try:
             self.host.close()
@@ -72,6 +77,7 @@ class updater():
                 print(exc)
 
     def downloadEntirePath(self):
+        self.totalSize = self.getFullSize()
         try:
             for (ftp_curpath, ftp_dirs, ftp_files) in self.host.walk(self.host.curdir):
                 self.downloadFolderFiles(ftp_curpath)
@@ -116,17 +122,21 @@ class updater():
             print("File", os.path.split(file_path)[1], "removed.")
 
     def getFullSize(self):
-        pass
+        totalSize = 0
+        for (ftp_curpath, ftp_dirs, ftp_files) in self.host.walk(self.host.curdir):
+            for files in ftp_files:
+                totalSize += self.host.path.getsize(self.host.path.join(ftp_curpath, files))
+        return(totalSize)
 
     def downloadFile(self, ftp_filepath, download_path):
         self.ui.statusText = "Downloading"
         self.dl_file_size = 0
-        self.pBarValue.set(0)
+        self.pBar1Value.set(0)
         self.file_size_bytes = self.host.path.getsize(ftp_filepath)
-        self.file_size = self.__size(self.file_size_bytes)
+        file_size = self.__size(self.file_size_bytes)
         ftp_path, filename=self.host.path.split(ftp_filepath)
-        print("\nDownloading " + filename + " - Size: " + self.file_size)
-        self.ui.statusLabel2.setText(filename + " - Size:" + self.file_size)
+        print("\nDownloading " + filename + " - Size: " + file_size)
+        self.ui.statusLabel2.setText(filename + " - Size:" + file_size)
         try:
             self.checkDownloadPath(os.path.join(download_path, ftp_path))
             self.host.download(ftp_filepath, os.path.join(download_path, ftp_filepath), mode='b', callback=self.__downloadBuffer)
@@ -137,7 +147,7 @@ class updater():
         return os.path.join(download_path, filename)
 
     def downloadFolderFiles(self, ftp_path=''):
-        self.ui.startPBar(self.pBarValue)
+        self.ui.startPBars(self.pBar1Value, self.pBar2Value)
 
         for filename in self.host.listdir(ftp_path):
             ftp_filepath = self.host.path.join(ftp_path, filename)
@@ -155,16 +165,26 @@ class updater():
 
                 if self.serverHashDict[ftp_filepath] != localFileHash:
                     self.downloadFile(ftp_filepath, self.download_path)
+                else:
+                    self.totalDownSize += self.host.path.getsize(ftp_filepath)
+                    self.pBar2Value.set(int(self.totalDownSize * 100 / self.totalSize))
 
                 self.localHashDict[ftp_filepath] = self.serverHashDict[ftp_filepath]
                     
-        self.ui.stopPBar()
+        self.ui.stopPBars()
 
     def __downloadBuffer(self, buffer):
-        self.dl_file_size += len(buffer)
+        buffer_len = len(buffer)
+        self.dl_file_size += buffer_len
+        self.totalDownSize += buffer_len
         p = int(self.dl_file_size * 100 / self.file_size_bytes)
+        try:
+            r = int(self.totalDownSize * 100 / self.totalSize)
+        except:
+            r = int(self.totalDownSize * 100 / self.file_size_bytes)
         print("Status: ", p, "%", end="\r")
-        self.pBarValue.set(p)
+        self.pBar1Value.set(p)
+        self.pBar2Value.set(r)        
 
     def __size(self, size):
         if size < 1024:

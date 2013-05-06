@@ -38,8 +38,8 @@ class Ui_Form(object):
         sizePolicy.setHeightForWidth(Form.sizePolicy().hasHeightForWidth())
 
         Form.setSizePolicy(sizePolicy)
-        Form.setMinimumSize(QtCore.QSize(350, 110))
-        Form.setMaximumSize(QtCore.QSize(9999, 9999))
+        Form.setMinimumSize(QtCore.QSize(370, 110))
+        Form.setMaximumSize(QtCore.QSize(370, 110))
 
         icon = QtGui.QIcon()
         icon.addPixmap(QtGui.QPixmap(_fromUtf8("")), QtGui.QIcon.Normal, QtGui.QIcon.Off)
@@ -107,17 +107,25 @@ class Ui_Form(object):
         self.pBarThread = downloadProgress()
         self.pBarThread.partDone.connect(self.updatePBar)
 
+        self.pBarThread2 = downloadProgress()
+        self.pBarThread2.partDone.connect(self.updatePBar2)
+
         self.retranslateUi(Form)
         QtCore.QMetaObject.connectSlotsByName(Form)
 
-    def startPBar(self, pBarVar):
-        self.pBarThread.Start(pBarVar)
+    def startPBars(self, pBar1Value, pBar2Value):
+        self.pBarThread.Start(pBar1Value)
+        self.pBarThread2.Start(pBar2Value)
 
-    def stopPBar(self):
+    def stopPBars(self):
         self.pBarThread.end = True
+        self.pBarThread2.end = True
 
     def updatePBar(self, val):
         self.progressBar.setValue(val)
+
+    def updatePBar2(self, val):
+        self.progressBar2.setValue(val)  
 
     def retranslateUi(self, Form):
         Form.setWindowTitle(QtGui.QApplication.translate("Form", "Updater", None, QtGui.QApplication.UnicodeUTF8))
