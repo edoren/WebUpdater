@@ -44,7 +44,6 @@ class updater():
             self.ui.statusLabel2.setText("Login authentication failed")
 
         self.serverHashDict = hashgen.openHashDict(self.downloadFile(config['FTP_Server']['HashPath'], self.updaterDir))
-        self.ui.statusLabel2.setText("")
         self.fileDiffer = DictDiffer(self.serverHashDict, self.localHashDict)
         self.host.chdir(self.serverpath)
         # print(self.serverHashDict)
