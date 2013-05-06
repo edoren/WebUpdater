@@ -78,6 +78,7 @@ def checkDiffer():
 def destructor():
     app.exec_()
     updater.close()
+    return 0
 
 if __name__ == "__main__":
     config = configparser.ConfigParser()
