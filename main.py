@@ -14,17 +14,23 @@ from ui import Ui_Form # Call Ui_Form method from ui.py
 from PyQt4 import QtCore, QtGui 
 
 def updateFiles():
+    ui.updateStatus = True
+    print("\nStarting Update.")
+    ui.statusLabel.setText("Starting Update.")
     updater.calculateDiffer()
     ui.updateStatus = False
     time.sleep(0.5)
-    print("Update Completed.")
+    print("\nUpdate Completed.")
     ui.statusLabel.setText("Update Completed.")
 
 def scanFiles():
+    ui.updateStatus = True
+    print("\nStarting Scan.")
+    ui.statusLabel.setText("Starting Scan.") 
     updater.downloadEntirePath()
     ui.updateStatus = False
     time.sleep(0.5)
-    print("Scan Completed.")
+    print("\nScan Completed.")
     ui.statusLabel.setText("Scan Completed.")    
 
 def generateConfig():
