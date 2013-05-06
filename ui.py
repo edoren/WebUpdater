@@ -88,13 +88,14 @@ class Ui_Form(object):
         self.buttonsLayout.setObjectName(_fromUtf8("buttonsLayout"))
 
         self.updateButton = QtGui.QPushButton(Form)
-        # self.updateButton.setEnabled(False)
+        self.updateButton.setEnabled(False)
         self.updateButton.setInputMethodHints(QtCore.Qt.ImhNone)
         self.updateButton.setObjectName(_fromUtf8("updateButton"))
 
         self.buttonsLayout.addWidget(self.updateButton)
 
         self.scanButton = QtGui.QPushButton(Form)
+        self.scanButton.setEnabled(False)
         self.scanButton.setObjectName(_fromUtf8("scanButton"))
 
         self.buttonsLayout.addWidget(self.scanButton)
@@ -125,10 +126,11 @@ class Ui_Form(object):
         self.scanButton.setText(QtGui.QApplication.translate("Form", "Scan", None, QtGui.QApplication.UnicodeUTF8))
 
     def labelStatus(self):
-        while self.updateStatus == True:
+        while True:
             time.sleep(0.5)
-            if self.statusCount < 3:
-                self.statusCount += 1
-            else:
-                self.statusCount = 0
-            self.statusLabel.setText(self.statusText + "."*self.statusCount)
+            if self.updateStatus == True:
+                if self.statusCount < 3:
+                    self.statusCount += 1
+                else:
+                    self.statusCount = 0
+                self.statusLabel.setText(self.statusText + "."*self.statusCount)

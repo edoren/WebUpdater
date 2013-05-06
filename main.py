@@ -14,34 +14,18 @@ from ui import Ui_Form # Call Ui_Form method from ui.py
 from PyQt4 import QtCore, QtGui 
 
 def updateFiles():
-    try:
-        updater.login(config)
-        updater.calculateDiffer()
-    except Exception as exc:
-        raise(exc)
-    finally:
-        ui.updateStatus = False
-        time.sleep(0.5)
-        print("Update Complete.")
-        ui.statusLabel.setText("Update Complete.")
-
-        updater.close()
-        print("\nConection Closed")
+    updater.calculateDiffer()
+    ui.updateStatus = False
+    time.sleep(0.5)
+    print("Update Completed.")
+    ui.statusLabel.setText("Update Completed.")
 
 def scanFiles():
-    try:
-        updater.login(config)
-        updater.downloadEntirePath()
-    except Exception as exc:
-        raise(exc)
-    finally:
-        ui.updateStatus = False
-        time.sleep(0.5)
-        print("Update Complete.")
-        ui.statusLabel.setText("Update Complete.")
-
-        updater.close()
-        print("\nConection Closed")
+    updater.downloadEntirePath()
+    ui.updateStatus = False
+    time.sleep(0.5)
+    print("Scan Completed.")
+    ui.statusLabel.setText("Scan Completed.")    
 
 def generateConfig():
     config = configparser.ConfigParser()
@@ -61,7 +45,7 @@ def startUpdaterThread():
     ui.updateButton.setEnabled(False)
     ui.scanButton.setEnabled(False)
     try:
-        checkUpdatesThread.start()
+        updaterThread.start()
     except:
         ui.updateButton.setEnabled(True)
         ui.scanButton.setEnabled(True)
@@ -77,6 +61,20 @@ def startScanThread():
         ui.scanButton.setEnabled(True)
         print("Error: unable to start scanner thread")
 
+def checkDiffer():
+    if updater.checkDiffer():
+        ui.updateStatus = False
+        time.sleep(0.5)
+        print("New updates avaliable.")
+        ui.statusLabel.setText("New updates avaliable.")
+    else:
+        ui.updateStatus = False
+        time.sleep(0.5)
+        print("No updates avaliable.")
+        ui.statusLabel.setText("No updates avaliable.")
+    ui.updateButton.setEnabled(True)
+    ui.scanButton.setEnabled(True)
+
 if __name__ == "__main__":
     config = configparser.ConfigParser()
     config.read('server-config.cfg')
@@ -85,21 +83,30 @@ if __name__ == "__main__":
     Form = QtGui.QWidget()
     ui = Ui_Form()
     ui.setupUi(Form)
+
+    updater = updater(ui)
+    updater.login(config)
+
     QtCore.QObject.connect(ui.updateButton, QtCore.SIGNAL("clicked()"), startUpdaterThread)
     QtCore.QObject.connect(ui.scanButton, QtCore.SIGNAL("clicked()"), startScanThread)
-    updater = updater(ui)
+
     Form.show()
 
+    checkDifferThread = threading.Thread( target=checkDiffer, args=( ) )
     statusThread = threading.Thread( target=ui.labelStatus, args=( ) )
-    checkUpdatesThread = threading.Thread( target=updateFiles, args=( ) )
+    updaterThread = threading.Thread( target=updateFiles, args=( ) )
     scanFilesThread = threading.Thread( target=scanFiles , args=( ) )
+    checkDifferThread.setDaemon(True)
     statusThread.setDaemon(True)
-    checkUpdatesThread.setDaemon(True)
+    updaterThread.setDaemon(True)
     scanFilesThread.setDaemon(True)
 
     try:
         statusThread.start()
+        checkDifferThread.start()
     except:
         print("Error: unable to start status thread")
 
-    sys.exit(app.exec_())
+    sys.exit(app.exec_(), updater.close())
+
+   
