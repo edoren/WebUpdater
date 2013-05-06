@@ -38,16 +38,23 @@ class updater():
         try:
             self.host = ftputil.FTPHost(server, username, password)
             print("Conection Started")
+            self.serverHashDict = hashgen.openHashDict(self.downloadFile(config['FTP_Server']['HashPath'], self.updaterDir))
+            self.ui.statusLabel2.setText("")
+            self.fileDiffer = DictDiffer(self.serverHashDict, self.localHashDict)
+            self.host.chdir(self.serverpath)
         except ftputil.ftp_error.PermanentError:
-            self.ui.updateStatus = False
-            print("Login authentication failed")
-            self.ui.statusLabel2.setText("Login authentication failed")
-
-        self.serverHashDict = hashgen.openHashDict(self.downloadFile(config['FTP_Server']['HashPath'], self.updaterDir))
-        self.ui.statusLabel2.setText("")
-        self.fileDiffer = DictDiffer(self.serverHashDict, self.localHashDict)
-        self.host.chdir(self.serverpath)
-        # print(self.serverHashDict)
+            print("Error!")
+            print("Login authentication failed.")
+            self.ui.statusLabel.setText("Error!")
+            self.ui.statusLabel2.setText("Login authentication failed.")
+            return 0
+        except ftputil.ftp_error.FTPOSError as error:
+            raise(error )
+            print("Error!")
+            print("No Internet connection.")
+            self.ui.statusLabel.setText("Error!")
+            self.ui.statusLabel2.setText("No Internet connection.")
+            return 0
 
     def close(self):
         try:

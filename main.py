@@ -77,7 +77,8 @@ def checkDiffer():
 
 def destructor():
     app.exec_()
-    updater.close()
+    if not updaterThread.isAlive() and not scanFilesThread.isAlive():
+        updater.close()
     return 0
 
 if __name__ == "__main__":
@@ -90,7 +91,7 @@ if __name__ == "__main__":
     ui.setupUi(Form)
 
     updater = updater(ui)
-    updater.login(config)
+    loginResponse = updater.login(config)
 
     QtCore.QObject.connect(ui.updateButton, QtCore.SIGNAL("clicked()"), startUpdaterThread)
     QtCore.QObject.connect(ui.scanButton, QtCore.SIGNAL("clicked()"), startScanThread)
@@ -106,10 +107,11 @@ if __name__ == "__main__":
     updaterThread.setDaemon(True)
     scanFilesThread.setDaemon(True)
 
-    try:
-        statusThread.start()
-        checkDifferThread.start()
-    except:
-        print("Error: unable to start status thread")
+    if loginResponse != 0:
+        try:
+            statusThread.start()
+            checkDifferThread.start()
+        except:
+            print("Error: unable to start status thread")
 
     sys.exit(destructor()) 
