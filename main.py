@@ -75,6 +75,10 @@ def checkDiffer():
     ui.updateButton.setEnabled(True)
     ui.scanButton.setEnabled(True)
 
+def destructor():
+    app.exec_()
+    updater.close()
+
 if __name__ == "__main__":
     config = configparser.ConfigParser()
     config.read('server-config.cfg')
@@ -107,6 +111,4 @@ if __name__ == "__main__":
     except:
         print("Error: unable to start status thread")
 
-    sys.exit(app.exec_(), updater.close())
-
-   
+    sys.exit(destructor()) 
