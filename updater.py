@@ -51,11 +51,11 @@ class updater():
             self.ui.statusLabel2.setText("Login authentication failed.")
             return 0
         except ftputil.ftp_error.FTPOSError as error:
-            raise(error )
             print("Error!")
             print("No Internet connection.")
             self.ui.statusLabel.setText("Error!")
             self.ui.statusLabel2.setText("No Internet connection.")
+            # raise(error)
             return 0
 
         self.pBar1Value.set(0)
