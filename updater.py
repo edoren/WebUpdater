@@ -191,7 +191,9 @@ class updater():
             file_size = str("{0:.2f}".format(size)) + " Bytes"
         elif size/1024 < 1024:
             file_size = str("{0:.2f}".format(size/1024)) + " KB"
-        else:
+        elif size/1024**2 < 1024:
             file_size = str("{0:.2f}".format(size/1024**2)) + " MB"
+        elif size/1024**3 < 1024:
+            file_size = str("{0:.2f}".format(size/1024**3)) + " GB"
 
         return file_size
